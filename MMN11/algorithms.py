@@ -1,5 +1,6 @@
 import argparse
 from collections import deque
+import math
 import timeit
 
 
@@ -27,200 +28,115 @@ NodesExpanded = 0 #total nodes visited
 MaxSearchDeep = 0 #max deep
 MaxFrontier = 0 #max frontier
 
-def bfs(startState):
 
+
+def bfs(startState):
     global MaxFrontier, GoalNode, MaxSearchDeep
 
-    boardVisited= set()
+    n = int(len(startState) ** 0.5)  # Determine the size of the grid
+    GoalState = list(range(1, n * n)) + [0]  # Generate the goal state dynamically
+
+    boardVisited = set()
     Queue = deque([PuzzleState(startState, None, None, 0, 0, 0)])
 
     while Queue:
         node = Queue.popleft()
-        boardVisited.add(node.map)
+        nodeMapStr = ''.join(str(num) for num in node.state)
+        boardVisited.add(nodeMapStr)
+
         if node.state == GoalState:
             GoalNode = node
             return Queue
-        posiblePaths = subNodes(node)
-        for path in posiblePaths:
-            if path.map not in boardVisited:
+
+        possiblePaths = subNodes(node, n)  # Ensure subNodes handles different grid sizes
+        for path in possiblePaths:
+            pathMapStr = ''.join(str(num) for num in path.state)
+            if pathMapStr not in boardVisited:
                 Queue.append(path)
-                boardVisited.add(path.map)
-                if path.depth > MaxSearchDeep:
-                    MaxSearchDeep = MaxSearchDeep + 1
-        if len(Queue) > MaxFrontier:
-            QueueSize = len(Queue)
-            MaxFrontier = QueueSize
+                boardVisited.add(pathMapStr)
+                MaxSearchDeep = max(MaxSearchDeep, path.depth)
 
-def subNodes(node):
+        MaxFrontier = max(MaxFrontier, len(Queue))
 
+    return None
+
+
+def subNodes(node, n):
     global NodesExpanded
-    NodesExpanded = NodesExpanded+1
+    NodesExpanded += 1
 
     nextPaths = []
-    nextPaths.append(PuzzleState(move(node.state, 1), node, 1, node.depth + 1, node.cost + 1, 0))
-    nextPaths.append(PuzzleState(move(node.state, 2), node, 2, node.depth + 1, node.cost + 1, 0))
-    nextPaths.append(PuzzleState(move(node.state, 3), node, 3, node.depth + 1, node.cost + 1, 0))
-    nextPaths.append(PuzzleState(move(node.state, 4), node, 4, node.depth + 1, node.cost + 1, 0))
-    nodes=[]
-    for procPaths in nextPaths:
-        if(procPaths.state!=None):
-            nodes.append(procPaths)
-    return nodes
+    index = node.state.index(0)  # Find the position of the empty space (0)
 
-def move(state, direction):
-    #generate a copy
+    # Up
+    if index >= n:  # Ensure it's not in the top row
+        newState = move(node.state, index, n, 1)  # direction 1 for up
+        if newState is not None:
+            nextPaths.append(PuzzleState(newState, node, 1, node.depth + 1, node.cost + 1, 0))
+
+    # Down
+    if index < n * (n - 1):  # Ensure it's not in the bottom row
+        newState = move(node.state, index, n, 2)  # direction 2 for down
+        if newState is not None:
+            nextPaths.append(PuzzleState(newState, node, 2, node.depth + 1, node.cost + 1, 0))
+
+    # Left
+    if index % n != 0:  # Ensure it's not in the leftmost column
+        newState = move(node.state, index, n, 3)  # direction 3 for left
+        if newState is not None:
+            nextPaths.append(PuzzleState(newState, node, 3, node.depth + 1, node.cost + 1, 0))
+
+    # Right
+    if index % n != n - 1:  # Ensure it's not in the rightmost column
+        newState = move(node.state, index, n, 4)  # direction 4 for right
+        if newState is not None:
+            nextPaths.append(PuzzleState(newState, node, 4, node.depth + 1, node.cost + 1, 0))
+
+    return nextPaths
+
+
+
+def move(state, index, n, direction):
+    # Make a copy of the current state
     newState = state[:]
-    
-    #obtain poss of 0
-    index = newState.index(0)
 
-    if(index==0):
-        if(direction==1):
-            return None
-        if(direction==2):
-            temp=newState[0]
-            newState[0]=newState[3]
-            newState[3]=temp
-        if(direction==3):
-            return None
-        if(direction==4):
-            temp=newState[0]
-            newState[0]=newState[1]
-            newState[1]=temp
-        return newState      
-    if(index==1):
-        if(direction==1):
-            return None
-        if(direction==2):
-            temp=newState[1]
-            newState[1]=newState[4]
-            newState[4]=temp
-        if(direction==3):
-            temp=newState[1]
-            newState[1]=newState[0]
-            newState[0]=temp
-        if(direction==4):
-            temp=newState[1]
-            newState[1]=newState[2]
-            newState[2]=temp
-        return newState    
-    if(index==2):
-        if(direction==1):
-            return None
-        if(direction==2):
-            temp=newState[2]
-            newState[2]=newState[5]
-            newState[5]=temp
-        if(direction==3):
-            temp=newState[2]
-            newState[2]=newState[1]
-            newState[1]=temp
-        if(direction==4):
-            return None
-        return newState
-    if(index==3):
-        if(direction==1):
-            temp=newState[3]
-            newState[3]=newState[0]
-            newState[0]=temp
-        if(direction==2):
-            temp=newState[3]
-            newState[3]=newState[6]
-            newState[6]=temp
-        if(direction==3):
-            return None
-        if(direction==4):
-            temp=newState[3]
-            newState[3]=newState[4]
-            newState[4]=temp
-        return newState
-    if(index==4):
-        if(direction==1):
-            temp=newState[4]
-            newState[4]=newState[1]
-            newState[1]=temp
-        if(direction==2):
-            temp=newState[4]
-            newState[4]=newState[7]
-            newState[7]=temp
-        if(direction==3):
-            temp=newState[4]
-            newState[4]=newState[3]
-            newState[3]=temp
-        if(direction==4):
-            temp=newState[4]
-            newState[4]=newState[5]
-            newState[5]=temp
-        return newState
-    if(index==5):
-        if(direction==1):
-            temp=newState[5]
-            newState[5]=newState[2]
-            newState[2]=temp
-        if(direction==2):
-            temp=newState[5]
-            newState[5]=newState[8]
-            newState[8]=temp
-        if(direction==3):
-            temp=newState[5]
-            newState[5]=newState[4]
-            newState[4]=temp
-        if(direction==4):
-            return None
-        return newState
-    if(index==6):
-        if(direction==1):
-            temp=newState[6]
-            newState[6]=newState[3]
-            newState[3]=temp
-        if(direction==2):
-            return None
-        if(direction==3):
-            return None
-        if(direction==4):
-            temp=newState[6]
-            newState[6]=newState[7]
-            newState[7]=temp
-        return newState
-    if(index==7):
-        if(direction==1):
-            temp=newState[7]
-            newState[7]=newState[4]
-            newState[4]=temp
-        if(direction==2):
-            return None
-        if(direction==3):
-            temp=newState[7]
-            newState[7]=newState[6]
-            newState[6]=temp
-        if(direction==4):
-            temp=newState[7]
-            newState[7]=newState[8]
-            newState[8]=temp
-        return newState
-    if(index==8):
-        if(direction==1):
-            temp=newState[8]
-            newState[8]=newState[5]
-            newState[5]=temp
-        if(direction==2):
-            return None
-        if(direction==3):
-            temp=newState[8]
-            newState[8]=newState[7]
-            newState[7]=temp
-        if(direction==4):
-            return None
-        return newState
+    # Calculate the row and column of the empty tile
+    row, col = divmod(index, n)
+
+    # Move up
+    if direction == 1 and row > 0:
+        newState[index], newState[index - n] = newState[index - n], newState[index]
+    
+    # Move down
+    elif direction == 2 and row < n - 1:
+        newState[index], newState[index + n] = newState[index + n], newState[index]
+
+    # Move left
+    elif direction == 3 and col > 0:
+        newState[index], newState[index - 1] = newState[index - 1], newState[index]
+    
+    # Move right
+    elif direction == 4 and col < n - 1:
+        newState[index], newState[index + 1] = newState[index + 1], newState[index]
+
+    # If the move is invalid, return None
+    else:
+        return None
+
+    return newState
+
 
 def iddfs(startState):
     global MaxFrontier, GoalNode, MaxSearchDeep
+
+    n = int(len(startState) ** 0.5)  # Determine the size of the grid
+    GoalState = list(range(1, n * n)) + [0]  # Generate the goal state dynamically
 
     depth = 0
     while True:
         visited = set()
         root = PuzzleState(startState, None, None, 0, 0, 0)
-        result = dls(root, depth, visited)
+        result = dls(root, depth, visited, GoalState, n)
         if result is not None:
             GoalNode = result
             return visited
@@ -228,7 +144,7 @@ def iddfs(startState):
         MaxSearchDeep = max(MaxSearchDeep, depth)
         MaxFrontier = max(MaxFrontier, len(visited))
 
-def dls(node, depth, visited):
+def dls(node, depth, visited, GoalState, n):
     if node.map in visited or depth < 0:
         return None
     visited.add(node.map)
@@ -237,97 +153,123 @@ def dls(node, depth, visited):
     elif depth == 0:
         return None
     else:
-        for child in subNodes(node):
-            result = dls(child, depth - 1, visited)
+        for child in subNodes(node, n):  # Ensure subNodes handles different grid sizes
+            result = dls(child, depth - 1, visited, GoalState, n)
             if result is not None:
                 return result
     return None
 
 
-def gbfs(startState):
-    
-    global MaxFrontier, MaxSearchDeep, GoalNode
-    
-    #transform initial state to calculate Heuritic
-    node1 = ""
-    for poss in startState:
-        node1 = node1 + str(poss)
 
-    #calculate Heuristic and set initial node
-    key = Heuristic(node1)
-    boardVisited= set()
+def gbfs(startState):
+    global MaxFrontier, MaxSearchDeep, GoalNode
+
+    # Determine the grid size (n x n) from the length of the start state
+    n = int(len(startState) ** 0.5)
+
+    # Generate the goal state for an n x n grid
+    GoalState = list(range(1, n * n)) + [0]
+
+    # Initialize variables
+    boardVisited = set()
     Queue = []
-    Queue.append(PuzzleState(startState, None, None, 0, 0, key)) 
-    boardVisited.add(node1)
     
+    # Convert the start state to a string format for heuristic calculation and storage
+    startStateStr = ''.join(str(num) for num in startState)
+    key = Heuristic(startStateStr, n)  # Heuristic function now also takes the size of the grid
+
+    # Add the initial state to the queue
+    Queue.append(PuzzleState(startState, None, None, 0, 0, key))
+    boardVisited.add(startStateStr)
+
     while Queue:
-        Queue.sort(key=lambda o: o.key) 
+        # Sort the queue based on the heuristic value
+        Queue.sort(key=lambda o: o.key)
         node = Queue.pop(0)
+
+        # Check for goal state
         if node.state == GoalState:
             GoalNode = node
             return GoalNode
-        posiblePaths = subNodes(node)
-        for path in posiblePaths:      
-            thisPath = path.map[:]
-            if thisPath not in boardVisited:
-                key = Heuristic(path.map)
-                path.key = key  # Only use the heuristic value for GBFS
-                Queue.append(path)               
-                boardVisited.add(path.map[:])
-                if path.depth > MaxSearchDeep:
-                    MaxSearchDeep = 1 + MaxSearchDeep
+
+        # Expand the node and explore its children
+        possiblePaths = subNodes(node, n)  # Ensure subNodes handles different grid sizes
+        for path in possiblePaths:
+            pathStr = ''.join(str(num) for num in path.state)
+            if pathStr not in boardVisited:
+                key = Heuristic(pathStr, n)  # Update heuristic value for the child node
+                path.key = key
+                Queue.append(path)
+                boardVisited.add(pathStr)
+                MaxSearchDeep = max(MaxSearchDeep, path.depth)
+
+    return None
+
 
 def ast(startState):
-    
     global MaxFrontier, MaxSearchDeep, GoalNode
-    
-    #transform initial state to calculate Heuritic
-    node1 = ""
-    for poss in startState:
-        node1 = node1 + str(poss)
 
-    #calculate Heuristic and set initial node
-    key = Heuristic(node1)
-    boardVisited= set()
+    n = int(len(startState) ** 0.5)  # Determine the size of the grid
+    GoalState = list(range(1, n * n)) + [0]  # Generate the goal state dynamically
+
+    # Initialize variables
+    boardVisited = set()
     Queue = []
-    Queue.append(PuzzleState(startState, None, None, 0, 0, key)) 
-    boardVisited.add(node1)
-    
+
+    # Convert the start state to a string format for heuristic calculation and storage
+    startStateStr = ''.join(str(num) for num in startState)
+    key = Heuristic(startStateStr, n)  # Heuristic function now also takes the size of the grid
+
+    # Add the initial state to the queue
+    Queue.append(PuzzleState(startState, None, None, 0, 0, key))
+    boardVisited.add(startStateStr)
+
     while Queue:
-        Queue.sort(key=lambda o: o.key) 
+        # Sort the queue based on the key (heuristic + depth)
+        Queue.sort(key=lambda o: o.key)
         node = Queue.pop(0)
+
+        # Check for goal state
         if node.state == GoalState:
             GoalNode = node
             return Queue
-        posiblePaths = subNodes(node)
-        for path in posiblePaths:      
-            thisPath = path.map[:]
-            if thisPath not in boardVisited:
-                key = Heuristic(path.map)
-                path.key = key + path.depth
-                Queue.append(path)               
-                boardVisited.add(path.map[:])
-                if path.depth > MaxSearchDeep:
-                    MaxSearchDeep = 1 + MaxSearchDeep
+
+        # Expand the node and explore its children
+        possiblePaths = subNodes(node, n)  # Ensure subNodes handles different grid sizes
+        for path in possiblePaths:
+            pathStr = ''.join(str(num) for num in path.state)
+            if pathStr not in boardVisited:
+                key = Heuristic(pathStr, n)  # Update heuristic value for the child node
+                path.key = key + path.depth  # A* key is heuristic value plus depth
+                Queue.append(path)
+                boardVisited.add(pathStr)
+                MaxSearchDeep = max(MaxSearchDeep, path.depth)
+
+    return None
+
         
         
 
 
-def Heuristic(node):
-    goal = GoalState
+def Heuristic(node, n):
+    goal = list(range(1, n * n)) + [0]  # Dynamically generate the goal state
+
     count = 0
     for i in range(len(node)):
         if int(node[i]) != goal[i]:
             # Calculate the correct row and column for the current tile
-            correct_row = int(goal.index(int(node[i])) / 3)
-            correct_col = goal.index(int(node[i])) % 3
+            correct_row = goal.index(int(node[i])) // n
+            correct_col = goal.index(int(node[i])) % n
+
             # Calculate the current row and column for the current tile
-            current_row = int(i / 3)
-            current_col = i % 3
-            # If the current tile is not in the correct row or column, increment the count
+            current_row = i // n
+            current_col = i % n
+
+            # Increment the count if the tile is not in the correct position
             if correct_row != current_row or correct_col != current_col:
                 count += 1
     return count
+
 
 
 def main():
@@ -349,17 +291,25 @@ def main():
     args = parser.parse_args()
     data = args.initialBoard.split(",")
 
-    #Build initial board state
+    # Obtain information from calling parameters
+    parser = argparse.ArgumentParser()
+    parser.add_argument('method')
+    parser.add_argument('initialBoard')
+    args = parser.parse_args()
+    data = args.initialBoard.split(",")
+
+    # Initialize InitialState
     InitialState = []
-    InitialState.append(int(data[0]))
-    InitialState.append(int(data[1]))
-    InitialState.append(int(data[2]))
-    InitialState.append(int(data[3]))
-    InitialState.append(int(data[4]))
-    InitialState.append(int(data[5]))
-    InitialState.append(int(data[6]))
-    InitialState.append(int(data[7]))
-    InitialState.append(int(data[8]))
+
+
+    # Check if the number of elements is a perfect square
+    if math.sqrt(len(data)).is_integer():
+        # Build initial board state
+        InitialState = [int(num) for num in data]
+    else:
+        print("Invalid input. The number of elements should be a perfect square.")
+        return
+
 
     #Start operation
     start = timeit.default_timer()
