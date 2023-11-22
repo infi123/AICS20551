@@ -286,17 +286,12 @@ def main():
     
     #Obtain information from calling parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('method')
+    # parser.add_argument('method')
     parser.add_argument('initialBoard')
     args = parser.parse_args()
     data = args.initialBoard.split(",")
 
-    # Obtain information from calling parameters
-    parser = argparse.ArgumentParser()
-    parser.add_argument('method')
-    parser.add_argument('initialBoard')
-    args = parser.parse_args()
-    data = args.initialBoard.split(",")
+    
 
     # Initialize InitialState
     InitialState = []
@@ -311,58 +306,53 @@ def main():
         return
 
 
-    #Start operation
-    start = timeit.default_timer()
+    # Define a list of algorithms
+    algorithms = [bfs, iddfs, gbfs, ast]
 
-    function = args.method
-    if(function=="bfs"):
-        bfs(InitialState)
-    if(function=="iddfs"):
-        iddfs(InitialState) 
-    if(function=="gbfs"):
-        gbfs(InitialState) 
-    if(function=="ast"):
-        ast(InitialState) 
+    # For each algorithm
+    for algorithm in algorithms:
+        # Start operation
+        start = timeit.default_timer()
 
-    stop = timeit.default_timer()
-    time = stop-start
+        # Run the algorithm
+        algorithm(InitialState)
 
-    #Save total path result
-    deep=GoalNode.depth
-    moves = []
-    while InitialState != GoalNode.state:
-        if GoalNode.move == 1:
-            path = 'Up'
-        if GoalNode.move == 2:
-            path = 'Down'
-        if GoalNode.move == 3:
-            path = 'Left'
-        if GoalNode.move == 4:
-            path = 'Right'
-        moves.insert(0, path)
-        GoalNode = GoalNode.parent
+        # Stop the timer
+        stop = timeit.default_timer()
+        time = stop - start
 
-    #'''
-    #Print results
-    print("path: ",moves)
-    print("cost: ",len(moves))
-    print("nodes expanded: ",str(NodesExpanded))
-    print("search_depth: ",str(deep))
-    print("MaxSearchDeep: ",str(MaxSearchDeep))
-    print("running_time: ",format(time, '.8f'))
-    #'''
+        # Save total path result
+        deep = GoalNode.depth
+        moves = []
+        while InitialState != GoalNode.state:
+            if GoalNode.move == 1:
+                path = 'Up'
+            if GoalNode.move == 2:
+                path = 'Down'
+            if GoalNode.move == 3:
+                path = 'Left'
+            if GoalNode.move == 4:
+                path = 'Right'
+            moves.insert(0, path)
+            GoalNode = GoalNode.parent
 
-    #Generate output document for grade system
-    #'''
-    file = open('output.txt', 'w')
-    file.write("path_to_goal: " + str(moves) + "\n")
-    file.write("cost_of_path: " + str(len(moves)) + "\n")
-    file.write("nodes_expanded: " + str(NodesExpanded) + "\n")
-    file.write("search_depth: " + str(deep) + "\n")
-    file.write("max_search_depth: " + str(MaxSearchDeep) + "\n")
-    file.write("running_time: " + format(time, '.8f') + "\n")
-    file.close()
-    #'''
+        # Print results
+        print(f"Algorithm: {algorithm.__name__}")
+        print("path: ", moves)
+        print("cost: ", len(moves))
+        print("nodes expanded: ", str(NodesExpanded))
+        print("search_depth: ", str(deep))
+        print("MaxSearchDeep: ", str(MaxSearchDeep))
+        print("running_time: ", format(time, '.8f'))
+
+        # Generate output document for grade system
+        with open(f'{algorithm.__name__}_output.txt', 'w') as file:
+            file.write("path_to_goal: " + str(moves) + "\n")
+            file.write("cost_of_path: " + str(len(moves)) + "\n")
+            file.write("nodes_expanded: " + str(NodesExpanded) + "\n")
+            file.write("search_depth: " + str(deep) + "\n")
+            file.write("max_search_depth: " + str(MaxSearchDeep) + "\n")
+            file.write("running_time: " + format(time, '.8f') + "\n")
 
 if __name__ == '__main__':
     main()
