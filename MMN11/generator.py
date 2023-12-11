@@ -3,7 +3,7 @@ from algorithms import *
 
 def random_state(steps):
     # Define the goal state and the possible moves
-    state = [1, 2, 3, 4, 5, 6, 7, 8, 0]
+    state = [0, 1, 2, 3, 4, 5, 6, 7, 8]
     moves = [1, 2, 3, 4]
 
     # Make a number of random moves

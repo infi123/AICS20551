@@ -34,7 +34,7 @@ def bfs(startState):
     global MaxFrontier, GoalNode, MaxSearchDeep
 
     n = int(len(startState) ** 0.5)  # Determine the size of the grid
-    GoalState = list(range(1, n * n)) + [0]  # Generate the goal state dynamically
+    GoalState = [0] + list(range(1, n * n))  # Generate the goal state dynamically
 
     boardVisited = set()
     Queue = deque([PuzzleState(startState, None, None, 0, 0, 0)])
@@ -130,7 +130,7 @@ def iddfs(startState):
     global MaxFrontier, GoalNode, MaxSearchDeep
 
     n = int(len(startState) ** 0.5)  # Determine the size of the grid
-    GoalState = list(range(1, n * n)) + [0]  # Generate the goal state dynamically
+    GoalState = [0] + list(range(1, n * n))  # Generate the goal state dynamically
 
     depth = 0
     while True:
@@ -168,7 +168,7 @@ def gbfs(startState):
     n = int(len(startState) ** 0.5)
 
     # Generate the goal state for an n x n grid
-    GoalState = list(range(1, n * n)) + [0]
+    GoalState = [0] + list(range(1, n * n))  # Generate the goal state dynamically
 
     # Initialize variables
     boardVisited = set()
@@ -210,7 +210,7 @@ def ast(startState):
     global MaxFrontier, MaxSearchDeep, GoalNode
 
     n = int(len(startState) ** 0.5)  # Determine the size of the grid
-    GoalState = list(range(1, n * n)) + [0]  # Generate the goal state dynamically
+    GoalState = [0] + list(range(1, n * n))  # Generate the goal state dynamically
 
     # Initialize variables
     boardVisited = set()
@@ -252,7 +252,7 @@ def ast(startState):
 
 
 def Heuristic(node, n):
-    goal = list(range(1, n * n)) + [0]  # Dynamically generate the goal state
+    goal = [0] + list(range(1, n * n))  # Dynamically generate the goal state
 
     count = 0
     for i in range(len(node)):
@@ -276,13 +276,6 @@ def main():
 
     global GoalNode
 
-    #a = [1,8,2,3,4,5,6,7,0]
-    #point=Heuristic(a)
-    #print(point)
-    #return
-    
-    #info = "6,1,8,4,0,2,7,3,5" #20
-    #info = "8,6,4,2,1,3,5,7,0" #26
     
     #Obtain information from calling parameters
     parser = argparse.ArgumentParser()
