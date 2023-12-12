@@ -353,21 +353,21 @@ def main():
 
         # Print results
         print(f"Algorithm: {algorithm.__name__}")
-        print("path: ", moves)
-        print("cost: ", len(moves))
         print("nodes expanded: ", str(NodesExpanded))
-        print("search_depth: ", str(deep))
-        print("MaxSearchDeep: ", str(MaxSearchDeep))
-        print("running_time: ", format(time, '.8f'))
+        print("path: ", moves)
+        # print("cost: ", len(moves))
+        # print("search_depth: ", str(deep))
+        # print("MaxSearchDeep: ", str(MaxSearchDeep))
+        # print("running_time: ", format(time, '.8f'))
 
         # Generate output document for grade system
-        with open(f'{algorithm.__name__}_output.txt', 'w') as file:
-            file.write("path_to_goal: " + str(moves) + "\n")
-            file.write("cost_of_path: " + str(len(moves)) + "\n")
-            file.write("nodes_expanded: " + str(NodesExpanded) + "\n")
-            file.write("search_depth: " + str(deep) + "\n")
-            file.write("max_search_depth: " + str(MaxSearchDeep) + "\n")
-            file.write("running_time: " + format(time, '.8f') + "\n")
+        # with open(f'{algorithm.__name__}_output.txt', 'w') as file:
+        #     file.write("path_to_goal: " + str(moves) + "\n")
+        #     file.write("cost_of_path: " + str(len(moves)) + "\n")
+        #     file.write("nodes_expanded: " + str(NodesExpanded) + "\n")
+        #     file.write("search_depth: " + str(deep) + "\n")
+        #     file.write("max_search_depth: " + str(MaxSearchDeep) + "\n")
+        #     file.write("running_time: " + format(time, '.8f') + "\n")
 
 if __name__ == '__main__':
     main()
