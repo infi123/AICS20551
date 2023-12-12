@@ -3,100 +3,130 @@ from collections import deque
 import math
 import timeit
 
-
 class PuzzleState:
+    """
+    This class represents a state of the puzzle game.
+    """
     def __init__(self, state, parent, move, depth, cost, key):
-        self.state = state
-        self.parent = parent
-        self.move = move
-        self.depth = depth
-        self.cost = cost
-        self.key = key
+        """
+        Initialize a new state.
+        """
+        self.state = state  # The current state of the puzzle
+        self.parent = parent  # The parent state that led to this state
+        self.move = move  # The move that was made to get to this state
+        self.depth = depth  # The depth of this state (number of moves made)
+        self.cost = cost  # The cost of getting to this state
+        self.key = key  # The key of this state
         if self.state:
-            self.map = ''.join(str(e) for e in self.state)
+            self.map = ''.join(str(e) for e in self.state)  # The map of this state
+
     def __eq__(self, other):
+        """
+        Check if this state is equal to another state.
+        """
         return self.map == other.map
+
     def __lt__(self, other):
+        """
+        Check if this state is less than another state.
+        """
         return self.map < other.map
+
     def __str__(self):
+        """
+        Return a string representation of this state.
+        """
         return str(self.map)    
 
-#Global variables***********************************************
-GoalState = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-GoalNode = None # at finding solution
-NodesExpanded = 0 #total nodes visited
-MaxSearchDeep = 0 #max deep
-MaxFrontier = 0 #max frontier
+# Global variables
+GoalState = [0, 1, 2, 3, 4, 5, 6, 7, 8]  # The goal state of the puzzle
+GoalNode = None  # The node that reaches the goal state
+NodesExpanded = 0  # The total number of nodes that have been expanded
+MaxSearchDeep = 0  # The maximum depth reached during the search
+MaxFrontier = 0  # The maximum size of the frontier
 
 
 
 def bfs(startState):
+    """
+    Perform a breadth-first search from the start state.
+    """
     global MaxFrontier, GoalNode, MaxSearchDeep
 
     n = int(len(startState) ** 0.5)  # Determine the size of the grid
     GoalState = [0] + list(range(1, n * n))  # Generate the goal state dynamically
 
-    boardVisited = set()
-    Queue = deque([PuzzleState(startState, None, None, 0, 0, 0)])
+    boardVisited = set()  # The set of states that have been visited
+    Queue = deque([PuzzleState(startState, None, None, 0, 0, 0)])  # The queue of states to visit
 
     while Queue:
-        node = Queue.popleft()
+        node = Queue.popleft()  # Get the next state to visit
         nodeMapStr = ''.join(str(num) for num in node.state)
-        boardVisited.add(nodeMapStr)
+        boardVisited.add(nodeMapStr)  # Mark this state as visited
 
-        if node.state == GoalState:
-            GoalNode = node
-            return Queue
+        if node.state == GoalState:  # If this state is the goal state
+            GoalNode = node  # Save this state
+            return Queue  # Return the queue of states to visit
 
-        possiblePaths = subNodes(node, n)  # Ensure subNodes handles different grid sizes
+        possiblePaths = subNodes(node, n)  # Get the possible next states
         for path in possiblePaths:
             pathMapStr = ''.join(str(num) for num in path.state)
-            if pathMapStr not in boardVisited:
-                Queue.append(path)
-                boardVisited.add(pathMapStr)
-                MaxSearchDeep = max(MaxSearchDeep, path.depth)
+            if pathMapStr not in boardVisited:  # If this state has not been visited
+                Queue.append(path)  # Add it to the queue of states to visit
+                boardVisited.add(pathMapStr)  # Mark this state as visited
+                MaxSearchDeep = max(MaxSearchDeep, path.depth)  # Update the maximum depth
 
-        MaxFrontier = max(MaxFrontier, len(Queue))
+        MaxFrontier = max(MaxFrontier, len(Queue))  # Update the maximum size of the frontier
 
-    return None
+    return None  # If no solution is found, return None
 
 
 def subNodes(node, n):
+    """
+    Generate the sub-nodes (children) of a given node.
+    """
     global NodesExpanded
-    NodesExpanded += 1
+    NodesExpanded += 1  # Increment the count of nodes expanded
 
-    nextPaths = []
+    nextPaths = []  # List to hold the generated sub-nodes
     index = node.state.index(0)  # Find the position of the empty space (0)
 
     # Up
     if index >= n:  # Ensure it's not in the top row
         newState = move(node.state, index, n, 1)  # direction 1 for up
         if newState is not None:
+            # Create a new state and add it to the list of next paths
             nextPaths.append(PuzzleState(newState, node, 1, node.depth + 1, node.cost + 1, 0))
 
     # Down
     if index < n * (n - 1):  # Ensure it's not in the bottom row
         newState = move(node.state, index, n, 2)  # direction 2 for down
         if newState is not None:
+            # Create a new state and add it to the list of next paths
             nextPaths.append(PuzzleState(newState, node, 2, node.depth + 1, node.cost + 1, 0))
 
     # Left
     if index % n != 0:  # Ensure it's not in the leftmost column
         newState = move(node.state, index, n, 3)  # direction 3 for left
         if newState is not None:
+            # Create a new state and add it to the list of next paths
             nextPaths.append(PuzzleState(newState, node, 3, node.depth + 1, node.cost + 1, 0))
 
     # Right
     if index % n != n - 1:  # Ensure it's not in the rightmost column
         newState = move(node.state, index, n, 4)  # direction 4 for right
         if newState is not None:
+            # Create a new state and add it to the list of next paths
             nextPaths.append(PuzzleState(newState, node, 4, node.depth + 1, node.cost + 1, 0))
 
-    return nextPaths
+    return nextPaths  # Return the list of sub-nodes
 
 
 
 def move(state, index, n, direction):
+    """
+    Move the empty tile in the given direction and return the new state.
+    """
     # Make a copy of the current state
     newState = state[:]
 
@@ -105,28 +135,35 @@ def move(state, index, n, direction):
 
     # Move up
     if direction == 1 and row > 0:
+        # Swap the empty tile with the tile above it
         newState[index], newState[index - n] = newState[index - n], newState[index]
     
     # Move down
     elif direction == 2 and row < n - 1:
+        # Swap the empty tile with the tile below it
         newState[index], newState[index + n] = newState[index + n], newState[index]
 
     # Move left
     elif direction == 3 and col > 0:
+        # Swap the empty tile with the tile to the left of it
         newState[index], newState[index - 1] = newState[index - 1], newState[index]
     
     # Move right
     elif direction == 4 and col < n - 1:
+        # Swap the empty tile with the tile to the right of it
         newState[index], newState[index + 1] = newState[index + 1], newState[index]
 
     # If the move is invalid, return None
     else:
         return None
 
-    return newState
+    return newState  # Return the new state
 
 
 def iddfs(startState):
+    """
+    Perform an iterative deepening depth-first search from the start state.
+    """
     global MaxFrontier, GoalNode, MaxSearchDeep
 
     # Initialize the maximum depth, and other global variables
@@ -143,30 +180,36 @@ def iddfs(startState):
             return result  # Return the solution
 
         depth += 1
-        MaxSearchDeep = max(MaxSearchDeep, depth)
+        MaxSearchDeep = max(MaxSearchDeep, depth)  # Update the maximum depth reached
 
 def depth_limited_dfs(startState, depth_limit, visited):
+    """
+    Perform a depth-limited depth-first search from the start state.
+    """
     stack = [PuzzleState(startState, None, None, 0, 0, 0)]
     n = int(len(startState) ** 0.5)  # Determine the size of the grid
     GoalState = [0] + list(range(1, n * n))  # Generate the goal state dynamically
 
     while stack:
-        node = stack.pop()
+        node = stack.pop()  # Get the next node to visit
 
         if node.state == GoalState:
             return node  # Goal found
 
-        if node.depth < depth_limit:
-            posiblePaths = reversed(subNodes(node,n))
+        if node.depth < depth_limit:  # If the depth limit has not been reached
+            posiblePaths = reversed(subNodes(node,n))  # Get the possible next nodes
             for path in posiblePaths:
                 if path.map not in visited or node.depth < visited[path.map]:
-                    stack.append(path)
-                    visited[path.map] = node.depth
+                    stack.append(path)  # Add the node to the stack
+                    visited[path.map] = node.depth  # Mark the node as visited
 
     return None  # Goal not found within depth limit
 
 
 def gbfs(startState):
+    """
+    Perform a greedy best-first search from the start state.
+    """
     global MaxFrontier, MaxSearchDeep, GoalNode
 
     # Determine the grid size (n x n) from the length of the start state
@@ -190,12 +233,12 @@ def gbfs(startState):
     while Queue:
         # Sort the queue based on the heuristic value
         Queue.sort(key=lambda o: o.key)
-        node = Queue.pop(0)
+        node = Queue.pop(0)  # Get the node with the lowest heuristic value
 
         # Check for goal state
         if node.state == GoalState:
             GoalNode = node
-            return GoalNode
+            return GoalNode  # Goal found
 
         # Expand the node and explore its children
         possiblePaths = subNodes(node, n)  # Ensure subNodes handles different grid sizes
@@ -204,14 +247,17 @@ def gbfs(startState):
             if pathStr not in boardVisited:
                 key = Heuristic(pathStr, pattern_database)  # Update heuristic value for the child node
                 path.key = key
-                Queue.append(path)
-                boardVisited.add(pathStr)
-                MaxSearchDeep = max(MaxSearchDeep, path.depth)
+                Queue.append(path)  # Add the node to the queue
+                boardVisited.add(pathStr)  # Mark the node as visited
+                MaxSearchDeep = max(MaxSearchDeep, path.depth)  # Update the maximum depth reached
 
-    return None
+    return None  # Goal not found
 
 
 def ast(startState):
+    """
+    Perform an A* search from the start state.
+    """
     global MaxFrontier, MaxSearchDeep, GoalNode
 
     n = int(len(startState) ** 0.5)  # Determine the size of the grid
@@ -232,12 +278,12 @@ def ast(startState):
     while Queue:
         # Sort the queue based on the key (heuristic + depth)
         Queue.sort(key=lambda o: o.key)
-        node = Queue.pop(0)
+        node = Queue.pop(0)  # Get the node with the lowest key value
 
         # Check for goal state
         if node.state == GoalState:
             GoalNode = node
-            return Queue
+            return Queue  # Goal found
 
         # Expand the node and explore its children
         possiblePaths = subNodes(node, n)  # Ensure subNodes handles different grid sizes
@@ -246,17 +292,25 @@ def ast(startState):
             if pathStr not in boardVisited:
                 key = Heuristic(pathStr, pattern_database)  # Update heuristic value for the child node
                 path.key = key + path.depth  # A* key is heuristic value plus depth
-                Queue.append(path)
-                boardVisited.add(pathStr)
-                MaxSearchDeep = max(MaxSearchDeep, path.depth)
+                Queue.append(path)  # Add the node to the queue
+                boardVisited.add(pathStr)  # Mark the node as visited
+                MaxSearchDeep = max(MaxSearchDeep, path.depth)  # Update the maximum depth reached
 
-    return None
+    return None  # Goal not found
 
         
         
 
 def generate_pattern_database(goal):
-    # Initialize the pattern database and the queue
+    """
+    Generate a pattern database for a given goal state.
+    
+    The pattern database is a dictionary where the keys are states and the values are the minimum number of moves
+    required to reach the goal state from the key state. The database is generated using a breadth-first search.
+    
+    :param goal: The goal state.
+    :return: The pattern database.
+    """
     pattern_database = {tuple(goal): 0}
     queue = deque([goal])
 
@@ -264,12 +318,10 @@ def generate_pattern_database(goal):
         state = queue.popleft()
         cost = pattern_database[tuple(state)]
 
-        # Generate all possible next states
         for direction in range(1, 5):
             index = state.index(0)
             new_state = move(state, index, 3, direction)
 
-            # If the new state is valid and not already in the database, add it
             if new_state is not None and tuple(new_state) not in pattern_database:
                 pattern_database[tuple(new_state)] = cost + 1
                 queue.append(new_state)
@@ -281,36 +333,43 @@ goal = [1, 2, 3, 4, 5, 6, 0, 0, 0]
 pattern_database = generate_pattern_database(goal)
 
 def Heuristic(node, pattern_database):
-    # Convert the node to a tuple to use it as a key in the pattern database
+    """
+    Calculate the heuristic value for a given node.
+    
+    The heuristic value is the minimum number of moves required to reach the goal state from the node state,
+    according to the pattern database. If the node state is not in the pattern database, a large number is returned.
+    
+    :param node: The node state.
+    :param pattern_database: The pattern database.
+    :return: The heuristic value.
+    """
     node = tuple(node)
 
-    # If the node is in the pattern database, return the stored value
     if node in pattern_database:
         return pattern_database[node]
 
-    # If the node is not in the pattern database, return a large number
-    # This should not happen if the pattern database is complete
     return float('inf')
 
 
 
 def main():
+    """
+    Main function to solve the puzzle.
 
+    This function takes the initial board state as a command-line argument, checks if the number of elements is a perfect square,
+    and then runs a list of algorithms (bfs, iddfs, gbfs, ast) on the initial state. It measures the time taken by each algorithm,
+    and saves the total path result. The path is a list of moves that were made to reach the goal state from the initial state.
+    """
     global GoalNode
 
-    
-    #Obtain information from calling parameters
+    # Obtain information from calling parameters
     parser = argparse.ArgumentParser()
-    # parser.add_argument('method')
     parser.add_argument('initialBoard')
     args = parser.parse_args()
     data = args.initialBoard.split(",")
 
-    
-
     # Initialize InitialState
     InitialState = []
-
 
     # Check if the number of elements is a perfect square
     if math.sqrt(len(data)).is_integer():
@@ -319,7 +378,6 @@ def main():
     else:
         print("Invalid input. The number of elements should be a perfect square.")
         return
-
 
     # Define a list of algorithms
     algorithms = [bfs, iddfs, gbfs, ast]
