@@ -1,6 +1,6 @@
-path_to_goal: ['Down', 'Left', 'Left', 'Down', 'Right', 'Right', 'Up', 'Left', 'Up', 'Left']
-cost_of_path: 10
-nodes_expanded: 1303
-search_depth: 10
-max_search_depth: 11
-running_time: 0.01139290
+path_to_goal: ['Up', 'Right', 'Down', 'Left', 'Up', 'Right', 'Right', 'Down', 'Left', 'Left', 'Up', 'Up']
+cost_of_path: 12
+nodes_expanded: 3628
+search_depth: 12
+max_search_depth: 12
+running_time: 0.01426320

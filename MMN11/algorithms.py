@@ -129,36 +129,41 @@ def move(state, index, n, direction):
 def iddfs(startState):
     global MaxFrontier, GoalNode, MaxSearchDeep
 
-    n = int(len(startState) ** 0.5)  # Determine the size of the grid
-    GoalState = [0] + list(range(1, n * n))  # Generate the goal state dynamically
+    # Initialize the maximum depth, and other global variables
+    MaxFrontier = MaxSearchDeep = 0
+    GoalNode = None
 
     depth = 0
     while True:
-        visited = set()
-        root = PuzzleState(startState, None, None, 0, 0, 0)
-        result = dls(root, depth, visited, GoalState, n)
+        boardVisited = {}
+        result = depth_limited_dfs(startState, depth, boardVisited)
+
         if result is not None:
             GoalNode = result
-            return visited
+            return result  # Return the solution
+
         depth += 1
         MaxSearchDeep = max(MaxSearchDeep, depth)
-        MaxFrontier = max(MaxFrontier, len(visited))
 
-def dls(node, depth, visited, GoalState, n):
-    if node.map in visited or depth < 0:
-        return None
-    visited.add(node.map)
-    if node.state == GoalState:
-        return node
-    elif depth == 0:
-        return None
-    else:
-        for child in subNodes(node, n):  # Ensure subNodes handles different grid sizes
-            result = dls(child, depth - 1, visited, GoalState, n)
-            if result is not None:
-                return result
-    return None
+def depth_limited_dfs(startState, depth_limit, visited):
+    stack = [PuzzleState(startState, None, None, 0, 0, 0)]
+    n = int(len(startState) ** 0.5)  # Determine the size of the grid
+    GoalState = [0] + list(range(1, n * n))  # Generate the goal state dynamically
 
+    while stack:
+        node = stack.pop()
+
+        if node.state == GoalState:
+            return node  # Goal found
+
+        if node.depth < depth_limit:
+            posiblePaths = reversed(subNodes(node,n))
+            for path in posiblePaths:
+                if path.map not in visited or node.depth < visited[path.map]:
+                    stack.append(path)
+                    visited[path.map] = node.depth
+
+    return None  # Goal not found within depth limit
 
 
 def gbfs(startState):
@@ -176,7 +181,7 @@ def gbfs(startState):
     
     # Convert the start state to a string format for heuristic calculation and storage
     startStateStr = ''.join(str(num) for num in startState)
-    key = Heuristic(startStateStr, n)  # Heuristic function now also takes the size of the grid
+    key = Heuristic(startStateStr, pattern_database)  # Heuristic function now also takes the size of the grid
 
     # Add the initial state to the queue
     Queue.append(PuzzleState(startState, None, None, 0, 0, key))
@@ -197,7 +202,7 @@ def gbfs(startState):
         for path in possiblePaths:
             pathStr = ''.join(str(num) for num in path.state)
             if pathStr not in boardVisited:
-                key = Heuristic(pathStr, n)  # Update heuristic value for the child node
+                key = Heuristic(pathStr, pattern_database)  # Update heuristic value for the child node
                 path.key = key
                 Queue.append(path)
                 boardVisited.add(pathStr)
@@ -218,7 +223,7 @@ def ast(startState):
 
     # Convert the start state to a string format for heuristic calculation and storage
     startStateStr = ''.join(str(num) for num in startState)
-    key = Heuristic(startStateStr, n)  # Heuristic function now also takes the size of the grid
+    key = Heuristic(startStateStr, pattern_database)  # Heuristic function now also takes the size of the grid
 
     # Add the initial state to the queue
     Queue.append(PuzzleState(startState, None, None, 0, 0, key))
@@ -239,7 +244,7 @@ def ast(startState):
         for path in possiblePaths:
             pathStr = ''.join(str(num) for num in path.state)
             if pathStr not in boardVisited:
-                key = Heuristic(pathStr, n)  # Update heuristic value for the child node
+                key = Heuristic(pathStr, pattern_database)  # Update heuristic value for the child node
                 path.key = key + path.depth  # A* key is heuristic value plus depth
                 Queue.append(path)
                 boardVisited.add(pathStr)
@@ -250,25 +255,42 @@ def ast(startState):
         
         
 
+def generate_pattern_database(goal):
+    # Initialize the pattern database and the queue
+    pattern_database = {tuple(goal): 0}
+    queue = deque([goal])
 
-def Heuristic(node, n):
-    goal = [0] + list(range(1, n * n))  # Dynamically generate the goal state
+    while queue:
+        state = queue.popleft()
+        cost = pattern_database[tuple(state)]
 
-    count = 0
-    for i in range(len(node)):
-        if int(node[i]) != goal[i]:
-            # Calculate the correct row and column for the current tile
-            correct_row = goal.index(int(node[i])) // n
-            correct_col = goal.index(int(node[i])) % n
+        # Generate all possible next states
+        for direction in range(1, 5):
+            index = state.index(0)
+            new_state = move(state, index, 3, direction)
 
-            # Calculate the current row and column for the current tile
-            current_row = i // n
-            current_col = i % n
+            # If the new state is valid and not already in the database, add it
+            if new_state is not None and tuple(new_state) not in pattern_database:
+                pattern_database[tuple(new_state)] = cost + 1
+                queue.append(new_state)
 
-            # Increment the count if the tile is not in the correct position
-            if correct_row != current_row or correct_col != current_col:
-                count += 1
-    return count
+    return pattern_database
+
+# Generate the pattern database for the first 6 tiles
+goal = [1, 2, 3, 4, 5, 6, 0, 0, 0]
+pattern_database = generate_pattern_database(goal)
+
+def Heuristic(node, pattern_database):
+    # Convert the node to a tuple to use it as a key in the pattern database
+    node = tuple(node)
+
+    # If the node is in the pattern database, return the stored value
+    if node in pattern_database:
+        return pattern_database[node]
+
+    # If the node is not in the pattern database, return a large number
+    # This should not happen if the pattern database is complete
+    return float('inf')
 
 
 
