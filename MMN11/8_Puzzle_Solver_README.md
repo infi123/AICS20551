@@ -29,12 +29,16 @@ Transitions between states occur through tile movements - up, down, left, or rig
 
 ## Heuristics for GBFS and A*
 
-For GBFS and A*, a custom heuristic is implemented. The heuristic assesses the puzzle state based on a predefined pattern database. This database maps specific tile configurations to their respective costs, aiding in the estimation of the remaining steps to reach the goal state. The heuristic is both admissible and consistent, ensuring the efficiency and accuracy of the search algorithms.
+For the Greedy Best-First Search (GBFS) and A* algorithms, a custom heuristic function is used to estimate the cost of the path from the current state to the goal state. This heuristic is based on a predefined pattern database, which is a lookup table that maps specific tile configurations to their respective costs.
+
+The cost in this context represents the minimum number of moves required to transform the given tile configuration into the goal configuration. By using this pattern database, the heuristic function can quickly estimate the remaining cost to reach the goal state from the current state, which guides the search algorithms towards promising paths.
+
+This heuristic function is both admissible and consistent. An admissible heuristic never overestimates the cost to reach the goal, which ensures that A* is optimal. A consistent heuristic, also known as a monotonic heuristic, satisfies the condition that the estimated cost from the current node to a goal node is no greater than the cost from the current node to a successor node plus the estimated cost from the successor node to the goal. This property ensures that A* is optimally efficient.
 
 ## Optimality of Algorithms
 
-- BFS and IDDFS: These algorithms are guaranteed to find the optimal solution path.
-- GBFS and AST: The optimality of these algorithms depends on the heuristic's effectiveness. In this implementation, the custom heuristic should ensure optimality, but results may vary based on specific puzzle configurations.
+- BFS and IDDFS: The Breadth-First Search (BFS) and Iterative Deepening Depth-First Search (IDDFS) algorithms are guaranteed to find the optimal solution path, as they explore all possible paths and always choose the shortest one.
+- GBFS and AST: The optimality of the Greedy Best-First Search (GBFS) and A* algorithms depends on the effectiveness of the heuristic used. In this implementation, the custom heuristic should ensure optimality, as it is both admissible and consistent. However, the actual results may vary based on specific puzzle configurations, as the heuristic's accuracy depends on how closely the pattern database matches the true costs.
 
 ## Running the Software
 
@@ -44,7 +48,7 @@ To run the software, follow these steps:
 
 Example:
 ```bash
-python algorithms.py "1,2,5,3,4,0,6,7,8"
+python algorithms.py "0,1,2,5,3,4,0,6,7,8"
 ```
 
 ## Output
