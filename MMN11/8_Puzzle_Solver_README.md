@@ -13,11 +13,14 @@ This 8-Puzzle Solver is a Python application designed to solve the 8-puzzle game
 ### Main Functions
 - `bfs`: Implements the Breadth-First Search algorithm.
 - `iddfs`: Implements the Iterative Deepening Depth-First Search algorithm.
-- `gbfs`: Implements the Greedy Best-First Search algorithm.
+- `pattern_database_gbfs`: Implements the Greedy Best-First Search algorithm using a pattern database heuristic.
+- `reverse_heuristic_gbfs`: Implements the Greedy Best-First Search algorithm using a reversal heuristic.
 - `ast`: Implements the A* Search algorithm.
 - `subNodes`: Generates possible moves from a given puzzle state.
 - `move`: Executes a move in a given direction in the puzzle.
-- `heuristic`: Calculates the heuristic value for GBFS and AST.
+- `reverse_heuristic`: Calculates the reversal heuristic value for GBFS and AST.
+- `pattern_database_heuristic`: Calculates the pattern database heuristic value for GBFS and AST.
+- `generate_pattern_database`: Generates the pattern database used for the pattern database heuristic.
 
 ## State Space Representation
 
