@@ -206,7 +206,7 @@ def depth_limited_dfs(startState, depth_limit, visited):
     return None  # Goal not found within depth limit
 
 
-def gbfs(startState):
+def reverse_heuristic_gbfs(startState):
     """
     Perform a greedy best-first search from the start state.
     """
@@ -224,7 +224,7 @@ def gbfs(startState):
     
     # Convert the start state to a string format for heuristic calculation and storage
     startStateStr = ''.join(str(num) for num in startState)
-    key = Heuristic(startStateStr, pattern_database)  # Heuristic function now also takes the size of the grid
+    key = reverse_heuristic(startStateStr)  # Heuristic function now also takes the size of the grid
 
     # Add the initial state to the queue
     Queue.append(PuzzleState(startState, None, None, 0, 0, key))
@@ -245,13 +245,62 @@ def gbfs(startState):
         for path in possiblePaths:
             pathStr = ''.join(str(num) for num in path.state)
             if pathStr not in boardVisited:
-                key = Heuristic(pathStr, pattern_database)  # Update heuristic value for the child node
+                key = reverse_heuristic(pathStr)  # Update heuristic value for the child node
                 path.key = key
                 Queue.append(path)  # Add the node to the queue
                 boardVisited.add(pathStr)  # Mark the node as visited
                 MaxSearchDeep = max(MaxSearchDeep, path.depth)  # Update the maximum depth reached
 
     return None  # Goal not found
+
+
+def pattern_database_gbfs(startState):
+    """
+    Perform a greedy best-first search from the start state.
+    """
+    global MaxFrontier, MaxSearchDeep, GoalNode
+
+    # Determine the grid size (n x n) from the length of the start state
+    n = int(len(startState) ** 0.5)
+
+    # Generate the goal state for an n x n grid
+    GoalState = [0] + list(range(1, n * n))  # Generate the goal state dynamically
+
+    # Initialize variables
+    boardVisited = set()
+    Queue = []
+    
+    # Convert the start state to a string format for heuristic calculation and storage
+    startStateStr = ''.join(str(num) for num in startState)
+    key = pattern_database_heuristic(startStateStr, pattern_database)  # Heuristic function now also takes the size of the grid
+
+    # Add the initial state to the queue
+    Queue.append(PuzzleState(startState, None, None, 0, 0, key))
+    boardVisited.add(startStateStr)
+
+    while Queue:
+        # Sort the queue based on the heuristic value
+        Queue.sort(key=lambda o: o.key)
+        node = Queue.pop(0)  # Get the node with the lowest heuristic value
+
+        # Check for goal state
+        if node.state == GoalState:
+            GoalNode = node
+            return GoalNode  # Goal found
+
+        # Expand the node and explore its children
+        possiblePaths = subNodes(node, n)  # Ensure subNodes handles different grid sizes
+        for path in possiblePaths:
+            pathStr = ''.join(str(num) for num in path.state)
+            if pathStr not in boardVisited:
+                key = pattern_database_heuristic(pathStr, pattern_database)  # Update heuristic value for the child node
+                path.key = key
+                Queue.append(path)  # Add the node to the queue
+                boardVisited.add(pathStr)  # Mark the node as visited
+                MaxSearchDeep = max(MaxSearchDeep, path.depth)  # Update the maximum depth reached
+
+    return None  # Goal not found
+
 
 
 def ast(startState):
@@ -269,7 +318,7 @@ def ast(startState):
 
     # Convert the start state to a string format for heuristic calculation and storage
     startStateStr = ''.join(str(num) for num in startState)
-    key = Heuristic(startStateStr, pattern_database)  # Heuristic function now also takes the size of the grid
+    key = reverse_heuristic(startStateStr)  # Heuristic function now also takes the size of the grid
 
     # Add the initial state to the queue
     Queue.append(PuzzleState(startState, None, None, 0, 0, key))
@@ -290,7 +339,7 @@ def ast(startState):
         for path in possiblePaths:
             pathStr = ''.join(str(num) for num in path.state)
             if pathStr not in boardVisited:
-                key = Heuristic(pathStr, pattern_database)  # Update heuristic value for the child node
+                key = reverse_heuristic(pathStr)  # Update heuristic value for the child node
                 path.key = key + path.depth  # A* key is heuristic value plus depth
                 Queue.append(path)  # Add the node to the queue
                 boardVisited.add(pathStr)  # Mark the node as visited
@@ -300,6 +349,41 @@ def ast(startState):
 
         
         
+
+def reverse_heuristic(state):
+    """
+    Calculate the heuristic value for a given state based on the number of direct adjacent tile reversals.
+    
+    A reversal is defined as two tiles that are in the reverse order to where they should be in the goal state.
+    
+    :param state: The state to calculate the heuristic for.
+    :return: The heuristic value.
+    """
+    # Initialize the heuristic value to 0
+    heuristic_value = 0
+
+    # Determine the size of the grid by taking the square root of the length of the state
+    n = int(len(state) ** 0.5)
+
+    # Check for reversals in rows
+    for row in range(n):
+        for col in range(n - 1):  # We subtract 1 because we're checking the current tile and the next one
+            index = row * n + col  # Calculate the index of the current tile in the state list
+            # If the current tile and the next one are a reversal and neither of them is the blank tile
+            if state[index] > state[index + 1] and state[index] != 0 and state[index + 1] != 0:
+                heuristic_value += 1  # Increment the heuristic value
+
+    # Check for reversals in columns
+    for col in range(n):
+        for row in range(n - 1):  # We subtract 1 because we're checking the current tile and the next one
+            index = row * n + col  # Calculate the index of the current tile in the state list
+            # If the current tile and the one below it are a reversal and neither of them is the blank tile
+            if state[index] > state[index + n] and state[index] != 0 and state[index + n] != 0:
+                heuristic_value += 1  # Increment the heuristic value
+
+    # Return the total number of reversals as the heuristic value
+    return heuristic_value
+
 
 def generate_pattern_database(goal):
     """
@@ -332,7 +416,7 @@ def generate_pattern_database(goal):
 goal = [1, 2, 3, 4, 5, 6, 0, 0, 0]
 pattern_database = generate_pattern_database(goal)
 
-def Heuristic(node, pattern_database):
+def pattern_database_heuristic(node, pattern_database):
     """
     Calculate the heuristic value for a given node.
     
@@ -380,7 +464,7 @@ def main():
         return
 
     # Define a list of algorithms
-    algorithms = [bfs, iddfs, gbfs, ast]
+    algorithms = [bfs, iddfs, reverse_heuristic_gbfs, pattern_database_gbfs, ast]
 
     # For each algorithm
     for algorithm in algorithms:

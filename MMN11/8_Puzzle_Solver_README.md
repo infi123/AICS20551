@@ -17,7 +17,7 @@ This 8-Puzzle Solver is a Python application designed to solve the 8-puzzle game
 - `ast`: Implements the A* Search algorithm.
 - `subNodes`: Generates possible moves from a given puzzle state.
 - `move`: Executes a move in a given direction in the puzzle.
-- `Heuristic`: Calculates the heuristic value for GBFS and AST.
+- `heuristic`: Calculates the heuristic value for GBFS and AST.
 
 ## State Space Representation
 
@@ -29,16 +29,41 @@ Transitions between states occur through tile movements - up, down, left, or rig
 
 ## Heuristics for GBFS and A*
 
-For the Greedy Best-First Search (GBFS) and A* algorithms, a custom heuristic function is used to estimate the cost of the path from the current state to the goal state. This heuristic is based on a predefined pattern database, which is a lookup table that maps specific tile configurations to their respective costs.
+Heuristic functions are critical in informing search algorithms like GBFS (Greedy Best-First Search) and A* about the potential cost from a current state to the goal state. We have two custom heuristics in consideration:
 
-The cost in this context represents the minimum number of moves required to transform the given tile configuration into the goal configuration. By using this pattern database, the heuristic function can quickly estimate the remaining cost to reach the goal state from the current state, which guides the search algorithms towards promising paths.
+### Tile Reversal Heuristic
+The Tile Reversal Heuristic counts the number of direct adjacent tile reversals in the current state, with a reversal being defined as two tiles that are in the reverse order compared to their positions in the goal state. The heuristic is admissible because each reversal represents at least one move that must be made to correct the order, ensuring the heuristic never overestimates the true cost to reach the goal. It's also consistent (or monotonic) because the heuristic value decreases or remains unchanged with each move that corrects a reversal, satisfying the condition `h(N) <= cost(N, P) + h(P)` for each node N and successor P.
 
-This heuristic function is both admissible and consistent. An admissible heuristic never overestimates the cost to reach the goal, which ensures that A* is optimal. A consistent heuristic, also known as a monotonic heuristic, satisfies the condition that the estimated cost from the current node to a goal node is no greater than the cost from the current node to a successor node plus the estimated cost from the successor node to the goal. This property ensures that A* is optimally efficient.
+### Pattern Database Heuristic
+The Pattern Database Heuristic is derived from a precomputed lookup table that maps specific tile configurations to their minimum move counts to reach the goal state. It is admissible since it provides the exact minimum cost to solve a subset of the puzzle, thus never overestimating. The heuristic is consistent as it inherently satisfies the monotonicity condition due to the nature of the database providing the exact minimum number of moves for its specific configuration.
+
+## Admissibility and Consistency Proofs
+
+### Admissibility Proof:
+1. **Tile Reversal**: If a tile is part of a reversal, it must move at least once to reach its correct position, making the count of reversals an underestimate or an exact match of the true cost.
+2. **Pattern Database**: Since the database contains actual minimum move counts for its configurations, it cannot overestimate the moves needed.
+
+### Consistency Proof:
+1. **Tile Reversal**: When a move is made, the heuristic value can only stay the same (if unrelated to reversals) or decrease (if it corrects a reversal). It never increases, thus fulfilling the consistency condition.
+2. **Pattern Database**: By definition, the lookup table provides an exact count of moves for subsets of the puzzle, ensuring that the cost from the current node to a successor plus the cost from the successor to the goal is always equal to or more than the cost from the current node to the goal.
 
 ## Optimality of Algorithms
 
-- BFS and IDDFS: The Breadth-First Search (BFS) and Iterative Deepening Depth-First Search (IDDFS) algorithms are guaranteed to find the optimal solution path, as they explore all possible paths and always choose the shortest one.
-- GBFS and AST: The optimality of the Greedy Best-First Search (GBFS) and A* algorithms depends on the effectiveness of the heuristic used. In this implementation, the custom heuristic should ensure optimality, as it is both admissible and consistent. However, the actual results may vary based on specific puzzle configurations, as the heuristic's accuracy depends on how closely the pattern database matches the true costs.
+- **BFS and IDDFS**: These algorithms will find the optimal solution since they explore all possible paths without heuristic guidance.
+- **GBFS**: The optimality of GBFS is not guaranteed, even with an admissible heuristic. Since GBFS does not consider the cost already incurred to reach a current state, it may choose a path that looks promising but leads to a longer solution. However, when using a pattern database as the heuristic, GBFS can become optimal. The pattern database provides an accurate and consistent estimation of the cost to reach the goal state, guiding GBFS towards the optimal path.
+- **A***: A* is guaranteed to find an optimal solution when using admissible and consistent heuristics, as it considers both the cost so far and the estimated cost to the goal.
+
+## Limitations of the Tile Reversal Heuristic in GBFS
+
+The Tile Reversal Heuristic can sometimes mislead GBFS because it only considers the immediate number of reversals without accounting for the cumulative past cost. GBFS might opt for a state with fewer reversals but which is, in reality, further from the goal when considering the total path cost.
+
+### Example:
+Consider the following states of an 8-puzzle:
+
+- Current State: 1 3 6 | 4 2 5 | 7 8 0 (Blank)
+- Goal State: 0 1 2 | 3 4 5 | 6 7 8 (Blank)
+
+Using the Tile Reversal Heuristic, the current state has two reversals (tiles 3 and 2, tiles 6 and 5). If GBFS encounters a state with one reversal but at a greater total path cost, it may still choose that state over others that would lead to an optimal path. This is because GBFS does not consider the total path cost, only the heuristic value, leading to suboptimal decisions.
 
 ## Running the Software
 
